@@ -774,7 +774,7 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: role,
+                  initialValue: role,
                   decoration: InputDecoration(
                     labelText: 'Rôle',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -836,7 +836,7 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: role,
+                initialValue: role,
                 decoration: InputDecoration(
                   labelText: 'Rôle',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -907,7 +907,7 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedEtat,
+                  initialValue: selectedEtat,
                   decoration: InputDecoration(
                     labelText: 'État initial',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -982,7 +982,7 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedEtat,
+                  initialValue: selectedEtat,
                   decoration: InputDecoration(
                     labelText: 'État du matériel',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -1038,7 +1038,7 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
-                value: statut,
+                initialValue: statut,
                 decoration: InputDecoration(
                   labelText: 'Statut',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -1050,7 +1050,7 @@ class _AdminPanelState extends State<AdminPanel> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: priorite,
+                initialValue: priorite,
                 decoration: InputDecoration(
                   labelText: 'Priorité',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),

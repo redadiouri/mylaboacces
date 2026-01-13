@@ -10,32 +10,35 @@ import '../config.dart';
 class ApiService {
   /// Essaye plusieurs variantes d'URL (127.0.0.1 / localhost / 10.0.2.2)
   /// afin de réduire les erreurs lors du développement local.
-  static Future<Map<String, dynamic>> _postWithFallback(String path, Map<String, dynamic> payload) async {
+  static Future<Map<String, dynamic>> _postWithFallback(
+      String path, Map<String, dynamic> payload) async {
     // Pour le web, utilisez uniquement 127.0.0.1 qui fonctionne
     final variants = <String>[apiBaseUrl];
-    
-    Exception? lastEx;
+
     for (final base in variants) {
       final url = Uri.parse('$base$path');
       try {
         final response = await http
-            .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload))
+            .post(url,
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode(payload))
             .timeout(const Duration(seconds: 3));
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         return body;
       } catch (e) {
-        lastEx = e as Exception?;
         // essayer la variante suivante
       }
     }
     return {
       'success': false,
-      'message': 'Impossible de joindre le serveur. Vérifiez Laragon/Apache et l’URL ${apiBaseUrl + path}. Détail: ${lastEx ?? 'erreur inconnue'}'
+      'message':
+          'Impossible de joindre le serveur. Vérifiez Laragon/Apache et l’URL ${apiBaseUrl + path}. Détail: erreur inconnue'
     };
   }
 
   /// Appel pour l'inscription
-  static Future<Map<String, dynamic>> register(String email, String nom, String role, String password) async {
+  static Future<Map<String, dynamic>> register(
+      String email, String nom, String role, String password) async {
     return await _postWithFallback('/register.php', {
       'email': email,
       'nom': nom,
@@ -45,12 +48,15 @@ class ApiService {
   }
 
   /// Appel pour la connexion (identifiant = email ou nom)
-  static Future<Map<String, dynamic>> login(String identifier, String password) async {
-    return await _postWithFallback('/login.php', {'identifier': identifier, 'password': password});
+  static Future<Map<String, dynamic>> login(
+      String identifier, String password) async {
+    return await _postWithFallback(
+        '/login.php', {'identifier': identifier, 'password': password});
   }
 
   /// Envoie un signalement au backend.
-  static Future<Map<String, dynamic>> sendReport(String userEmail, String equipment, int quantity, String description) async {
+  static Future<Map<String, dynamic>> sendReport(String userEmail,
+      String equipment, int quantity, String description) async {
     return await _postWithFallback('/report.php', {
       'user_email': userEmail,
       'equipment_name': equipment,
@@ -61,8 +67,10 @@ class ApiService {
 
   /// Supprime le compte utilisateur après vérification du mot de passe.
   /// L'identifiant peut être l'email ou le nom (format Niveau_NOM.Prenom).
-  static Future<Map<String, dynamic>> deleteAccount(String identifier, String password) async {
-    return await _postWithFallback('/delete.php', {'identifier': identifier, 'password': password});
+  static Future<Map<String, dynamic>> deleteAccount(
+      String identifier, String password) async {
+    return await _postWithFallback(
+        '/delete.php', {'identifier': identifier, 'password': password});
   }
 
   /// Soumet une demande d'emprunt de matériel.
@@ -83,7 +91,8 @@ class ApiService {
   }
 
   /// Récupère toutes les demandes d'emprunt de l'utilisateur ou TOUTES si userEmail = 'all'.
-  static Future<Map<String, dynamic>> getBorrowRequests(String userEmail) async {
+  static Future<Map<String, dynamic>> getBorrowRequests(
+      String userEmail) async {
     final variants = <String>[apiBaseUrl];
     if (apiBaseUrl.contains('127.0.0.1')) {
       variants.add(apiBaseUrl.replaceFirst('127.0.0.1', 'localhost'));
@@ -93,27 +102,30 @@ class ApiService {
       variants.add(apiBaseUrl.replaceFirst('localhost', '10.0.2.2'));
     }
 
-    Exception? lastEx;
     for (final base in variants) {
       final url = userEmail == 'all'
           ? Uri.parse('$base/get_all_borrow_requests.php')
-          : Uri.parse('$base/get_borrow_requests.php?user_email=${Uri.encodeComponent(userEmail)}');
+          : Uri.parse(
+              '$base/get_borrow_requests.php?user_email=${Uri.encodeComponent(userEmail)}');
       try {
-        final response = await http.get(url).timeout(const Duration(seconds: 8));
+        final response =
+            await http.get(url).timeout(const Duration(seconds: 8));
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         return body;
       } catch (e) {
-        lastEx = e as Exception?;
+        // ignore
       }
     }
     return {
       'success': false,
-      'message': 'Impossible de récupérer les demandes. Détail: ${lastEx ?? 'erreur inconnue'}'
+      'message':
+          'Impossible de récupérer les demandes. Détail: erreur inconnue'
     };
   }
 
   /// Met à jour le statut d'une demande d'emprunt.
-  static Future<Map<String, dynamic>> updateBorrowRequestStatus(int requestId, String status) async {
+  static Future<Map<String, dynamic>> updateBorrowRequestStatus(
+      int requestId, String status) async {
     return await _postWithFallback('/update_borrow_request.php', {
       'request_id': requestId,
       'status': status,
@@ -130,22 +142,23 @@ class ApiService {
       variants.add(apiBaseUrl.replaceFirst('127.0.0.1', '10.0.2.2'));
     }
 
-    Exception? lastEx;
     for (final base in variants) {
       final url = Uri.parse('$base/get_users.php');
       try {
-        final response = await http.get(url).timeout(const Duration(seconds: 8));
+        final response =
+            await http.get(url).timeout(const Duration(seconds: 8));
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         return body;
       } catch (e) {
-        lastEx = e as Exception?;
+        // ignore
       }
     }
     return {'success': false, 'message': 'Erreur récupération utilisateurs'};
   }
 
   /// Modifie un utilisateur
-  static Future<Map<String, dynamic>> updateUser(String email, String role, String nom) async {
+  static Future<Map<String, dynamic>> updateUser(
+      String email, String role, String nom) async {
     return await _postWithFallback('/update_user.php', {
       'email': email,
       'role': role,
@@ -166,22 +179,23 @@ class ApiService {
       variants.add(apiBaseUrl.replaceFirst('127.0.0.1', '10.0.2.2'));
     }
 
-    Exception? lastEx;
     for (final base in variants) {
       final url = Uri.parse('$base/get_equipment.php');
       try {
-        final response = await http.get(url).timeout(const Duration(seconds: 8));
+        final response =
+            await http.get(url).timeout(const Duration(seconds: 8));
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         return body;
       } catch (e) {
-        lastEx = e as Exception?;
+        // ignore
       }
     }
     return {'success': false, 'message': 'Erreur récupération équipements'};
   }
 
   /// Ajoute un équipement
-  static Future<Map<String, dynamic>> addEquipment(String nom, int quantiteTotal) async {
+  static Future<Map<String, dynamic>> addEquipment(
+      String nom, int quantiteTotal) async {
     return await _postWithFallback('/add_equipment.php', {
       'nom': nom,
       'quantiteTotal': quantiteTotal,
@@ -189,7 +203,8 @@ class ApiService {
   }
 
   /// Modifie un équipement
-  static Future<Map<String, dynamic>> updateEquipment(int id, String nom, int quantiteTotal) async {
+  static Future<Map<String, dynamic>> updateEquipment(
+      int id, String nom, int quantiteTotal) async {
     return await _postWithFallback('/update_equipment.php', {
       'id': id,
       'nom': nom,
@@ -210,22 +225,23 @@ class ApiService {
       variants.add(apiBaseUrl.replaceFirst('127.0.0.1', '10.0.2.2'));
     }
 
-    Exception? lastEx;
     for (final base in variants) {
       final url = Uri.parse('$base/get_reports.php');
       try {
-        final response = await http.get(url).timeout(const Duration(seconds: 8));
+        final response =
+            await http.get(url).timeout(const Duration(seconds: 8));
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         return body;
       } catch (e) {
-        lastEx = e as Exception?;
+        // ignore
       }
     }
     return {'success': false, 'message': 'Erreur récupération signalements'};
   }
 
   /// Modifie un signalement
-  static Future<Map<String, dynamic>> updateReport(int id, String statut, String priorite) async {
+  static Future<Map<String, dynamic>> updateReport(
+      int id, String statut, String priorite) async {
     return await _postWithFallback('/update_report.php', {
       'id': id,
       'statut': statut,

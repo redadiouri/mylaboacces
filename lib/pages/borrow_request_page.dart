@@ -14,6 +14,8 @@ class _BorrowRequestPageState extends State<BorrowRequestPage> {
   final List<BorrowRequest> borrowRequests = [];
   bool isLoading = false;
 
+  static const Color primaryColor = Color(0xFFB71C1C);
+
   final List<Equipment> availableEquipments = [
     Equipment('Écrans', 15),
     Equipment('Routeurs', 8),
@@ -30,70 +32,70 @@ class _BorrowRequestPageState extends State<BorrowRequestPage> {
   }
 
   void _loadBorrowRequests() {
-    // Placeholder pour charger les demandes existantes
-    // Dans un vrai cas, appeler l'API
+    // Placeholder API
   }
+
+  // ===================== ADD REQUEST =====================
 
   void _showAddRequestDialog() {
     String? selectedEquipment;
     int quantity = 1;
-    TextEditingController purposeController = TextEditingController();
-    TextEditingController durationController = TextEditingController();
+    final purposeController = TextEditingController();
+    final durationController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Nouvelle demande d\'emprunt'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: StatefulBuilder(
-          builder: (context, setState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Matériel à emprunter',
-                    border: OutlineInputBorder(),
-                  ),
-                  initialValue: selectedEquipment,
-                  items: [
-                    for (var eq in availableEquipments)
-                      DropdownMenuItem(
-                        value: eq.name,
-                        child: Text(eq.name),
+          builder: (context, setState) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Matériel',
+                  border: OutlineInputBorder(),
+                ),
+                items: availableEquipments
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e.name,
+                        child: Text(e.name),
                       ),
-                  ],
-                  onChanged: (val) => setState(() => selectedEquipment = val),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => selectedEquipment = val),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                initialValue: '1',
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Quantité',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Quantité',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  initialValue: '1',
-                  onChanged: (val) => setState(() => quantity = int.tryParse(val) ?? 1),
+                onChanged: (v) => quantity = int.tryParse(v) ?? 1,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: purposeController,
+                maxLines: 2,
+                decoration: const InputDecoration(
+                  labelText: 'Objectif / Projet',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: purposeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Objectif / Projet',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: durationController,
+                decoration: const InputDecoration(
+                  labelText: 'Durée prévue',
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: durationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Durée (ex: 1 jour, 2 semaines)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            );
-          },
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -101,11 +103,10 @@ class _BorrowRequestPageState extends State<BorrowRequestPage> {
             child: const Text('Annuler'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             onPressed: () {
-              if (selectedEquipment == null || selectedEquipment!.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Veuillez sélectionner un matériel')),
-                );
+              if (selectedEquipment == null) {
+                _showSnack('Veuillez sélectionner un matériel');
                 return;
               }
               _submitBorrowRequest(
@@ -141,54 +142,54 @@ class _BorrowRequestPageState extends State<BorrowRequestPage> {
 
     setState(() => isLoading = false);
 
-    if (mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(result['success'] == true ? 'Demande soumise' : 'Erreur'),
-          content: Text(result['message'] ?? ''),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
+    if (!mounted) return;
 
-      if (result['success'] == true) {
-        // Ajouter la demande à la liste
-        setState(() {
-          borrowRequests.add(
-            BorrowRequest(
-              equipment: equipment,
-              quantity: quantity,
-              purpose: purpose,
-              duration: duration,
-              status: 'En attente',
-              submittedAt: DateTime.now(),
-            ),
-          );
-        });
-      }
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(result['success'] ? 'Succès' : 'Erreur'),
+        content: Text(result['message'] ?? ''),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+
+    if (result['success']) {
+      setState(() {
+        borrowRequests.add(
+          BorrowRequest(
+            equipment: equipment,
+            quantity: quantity,
+            purpose: purpose,
+            duration: duration,
+            status: 'En attente',
+            submittedAt: DateTime.now(),
+          ),
+        );
+      });
     }
   }
+
+  // ===================== DETAILS =====================
 
   void _showRequestDetails(BorrowRequest request) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Détails - ${request.equipment}'),
+      builder: (_) => AlertDialog(
+        title: Text(request.equipment),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('Matériel', request.equipment),
-            _buildDetailRow('Quantité', '${request.quantity}'),
-            _buildDetailRow('Objectif', request.purpose),
-            _buildDetailRow('Durée', request.duration),
-            _buildDetailRow('Statut', request.status),
-            _buildDetailRow('Soumis le', _formatDate(request.submittedAt)),
+            _detail('Quantité', '${request.quantity}'),
+            _detail('Durée', request.duration),
+            _detail('Objectif', request.purpose),
+            _detail('Statut', request.status),
+            _detail('Soumis le', _formatDate(request.submittedAt)),
           ],
         ),
         actions: [
@@ -201,29 +202,90 @@ class _BorrowRequestPageState extends State<BorrowRequestPage> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _detail(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
+          Text('$label : ',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} à ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  // ===================== UI =====================
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Demandes d\'emprunt'),
+        backgroundColor: primaryColor,
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : borrowRequests.isEmpty
+              ? _emptyState()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: borrowRequests.length,
+                  itemBuilder: (_, i) {
+                    final r = borrowRequests[i];
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor:
+                              _statusColor(r.status).withOpacity(0.2),
+                          child: Icon(Icons.shopping_cart,
+                              color: _statusColor(r.status)),
+                        ),
+                        title: Text(r.equipment,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(
+                            'Quantité: ${r.quantity} • Durée: ${r.duration}'),
+                        trailing: Chip(
+                          label: Text(r.status),
+                          backgroundColor:
+                              _statusColor(r.status).withOpacity(0.15),
+                          labelStyle:
+                              TextStyle(color: _statusColor(r.status)),
+                        ),
+                        onTap: () => _showRequestDetails(r),
+                      ),
+                    );
+                  },
+                ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: primaryColor,
+        onPressed: _showAddRequestDialog,
+        icon: const Icon(Icons.add),
+        label: const Text('Nouvelle demande'),
+      ),
+    );
   }
 
-  Color _getStatusColor(String status) {
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.assignment_outlined, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text('Aucune demande',
+              style: TextStyle(fontSize: 18, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  // ===================== HELPERS =====================
+
+  Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'approuvée':
         return Colors.green;
@@ -236,117 +298,16 @@ class _BorrowRequestPageState extends State<BorrowRequestPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Demandes d\'emprunt'),
-        backgroundColor: Colors.white,
-        elevation: 2,
-        foregroundColor: Colors.black87,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : borrowRequests.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.shopping_cart_outlined,
-                        size: 80,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aucune demande d\'emprunt',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Commencez par soumettre une nouvelle demande',
-                        style: TextStyle(color: Colors.grey[500]),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: borrowRequests.length,
-                  itemBuilder: (context, index) {
-                    final request = borrowRequests[index];
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.shopping_cart,
-                            color: Colors.redAccent.shade700,
-                          ),
-                        ),
-                        title: Text(
-                          request.equipment,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              'Quantité: ${request.quantity} | Durée: ${request.duration}',
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ],
-                        ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(request.status).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            request.status,
-                            style: TextStyle(
-                              color: _getStatusColor(request.status),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        onTap: () => _showRequestDetails(request),
-                      ),
-                    );
-                  },
-                ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: "add_request",
-        onPressed: _showAddRequestDialog,
-        label: const Text('Nouvelle demande'),
-        icon: const Icon(Icons.add),
-        backgroundColor: Colors.redAccent.shade700,
-      ),
-    );
+  String _formatDate(DateTime d) =>
+      '${d.day}/${d.month}/${d.year} à ${d.hour}:${d.minute.toString().padLeft(2, '0')}';
+
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 }
+
+// ===================== MODELS =====================
 
 class BorrowRequest {
   final String equipment;
@@ -369,6 +330,5 @@ class BorrowRequest {
 class Equipment {
   final String name;
   final int quantity;
-
   Equipment(this.name, this.quantity);
 }
